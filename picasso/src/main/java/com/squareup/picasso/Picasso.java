@@ -728,6 +728,7 @@ public class Picasso {
 		if (context == null) {
 			throw new IllegalArgumentException("context == null");
 		}
+
 		// 单例模式 双重检查加锁法
 		if (singleton == null) {
 			// 括号中的意思就是一把锁 这个是类锁 只有一个
