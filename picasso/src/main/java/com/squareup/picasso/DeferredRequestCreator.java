@@ -28,100 +28,109 @@ import static android.os.Build.VERSION_CODES.HONEYCOMB_MR1;
 
 class DeferredRequestCreator implements ViewTreeObserver.OnPreDrawListener {
 
-  final RequestCreator creator;
-  final WeakReference<ImageView> target;
-  Object attachListener;
-  Callback callback;
+	final RequestCreator creator;
 
-  @VisibleForTesting DeferredRequestCreator(RequestCreator creator, ImageView target) {
-    this(creator, target, null);
-  }
+	//  当一个对象仅仅被weak reference指向, 而没有任何其他strong reference指向的时候, 如果GC运行, 那么
+	//  这个对象就会被回收
+	//  WeakReference的一个特点是它何时被回收是不可确定的, 因为这是由GC运行的不确定性所确定的. 所以, 一般
+	// 用weak reference引用的对象是有价值被cache, 而且很容易被重新被构建, 且很消耗内存的对象.
+	final WeakReference<ImageView> target;
+	Object attachListener;
+	Callback callback;
 
-  DeferredRequestCreator(RequestCreator creator, ImageView target, Callback callback) {
-    this.creator = creator;
-    this.target = new WeakReference<ImageView>(target);
-    this.callback = callback;
+	@VisibleForTesting
+	DeferredRequestCreator(RequestCreator creator, ImageView target) {
+		this(creator, target, null);
+	}
 
-    // Since the view on which an image is being requested might not be attached to a hierarchy,
-    // defer adding the pre-draw listener until the view is attached. This works around a platform
-    // behavior where a global, dummy VTO is used until a real one is available on attach.
-    // See: https://github.com/square/picasso/issues/1321
-    if (SDK_INT >= HONEYCOMB_MR1 && target.getWindowToken() == null) {
-      attachListener = HoneycombMr1ViewUtil.defer(target, this);
-    } else {
-      target.getViewTreeObserver().addOnPreDrawListener(this);
-    }
-  }
+	DeferredRequestCreator(RequestCreator creator, ImageView target, Callback callback) {
+		this.creator = creator;
+		this.target = new WeakReference<ImageView>(target);
+		this.callback = callback;
 
-  @Override public boolean onPreDraw() {
-    ImageView target = this.target.get();
-    if (target == null) {
-      return true;
-    }
-    ViewTreeObserver vto = target.getViewTreeObserver();
-    if (!vto.isAlive()) {
-      return true;
-    }
+		// Since the view on which an image is being requested might not be attached to a hierarchy,
+		// defer adding the pre-draw listener until the view is attached. This works around a platform
+		// behavior where a global, dummy VTO is used until a real one is available on attach.
+		// See: https://github.com/square/picasso/issues/1321
+		if (SDK_INT >= HONEYCOMB_MR1 && target.getWindowToken() == null) {
+			attachListener = HoneycombMr1ViewUtil.defer(target, this);
+		} else {
+			target.getViewTreeObserver().addOnPreDrawListener(this);
+		}
+	}
 
-    int width = target.getWidth();
-    int height = target.getHeight();
+	@Override
+	public boolean onPreDraw() {
+		ImageView target = this.target.get();
+		if (target == null) {
+			return true;
+		}
+		ViewTreeObserver vto = target.getViewTreeObserver();
+		if (!vto.isAlive()) {
+			return true;
+		}
 
-    if (width <= 0 || height <= 0 || target.isLayoutRequested()) {
-      return true;
-    }
+		int width = target.getWidth();
+		int height = target.getHeight();
 
-    vto.removeOnPreDrawListener(this);
-    this.target.clear();
+		if (width <= 0 || height <= 0 || target.isLayoutRequested()) {
+			return true;
+		}
 
-    this.creator.unfit().resize(width, height).into(target, callback);
-    return true;
-  }
+		vto.removeOnPreDrawListener(this);
+		this.target.clear();
 
-  void cancel() {
-    creator.clearTag();
-    callback = null;
+		this.creator.unfit().resize(width, height).into(target, callback);
+		return true;
+	}
 
-    ImageView target = this.target.get();
-    if (target == null) {
-      return;
-    }
-    this.target.clear();
+	void cancel() {
+		creator.clearTag();
+		callback = null;
 
-    if (attachListener != null) { // Only non-null on Honeycomb MR1+
-      HoneycombMr1ViewUtil.cancel(target, attachListener);
-      attachListener = null;
-    } else {
-      ViewTreeObserver vto = target.getViewTreeObserver();
-      if (!vto.isAlive()) {
-        return;
-      }
-      vto.removeOnPreDrawListener(this);
-    }
-  }
+		ImageView target = this.target.get();
+		if (target == null) {
+			return;
+		}
+		this.target.clear();
 
-  Object getTag() {
-    return creator.getTag();
-  }
+		if (attachListener != null) { // Only non-null on Honeycomb MR1+
+			HoneycombMr1ViewUtil.cancel(target, attachListener);
+			attachListener = null;
+		} else {
+			ViewTreeObserver vto = target.getViewTreeObserver();
+			if (!vto.isAlive()) {
+				return;
+			}
+			vto.removeOnPreDrawListener(this);
+		}
+	}
 
-  static class HoneycombMr1ViewUtil {
-    static Object defer(View view, final DeferredRequestCreator creator) {
-      OnAttachStateChangeListener listener = new OnAttachStateChangeListener() {
-        @Override public void onViewAttachedToWindow(View view) {
-          view.removeOnAttachStateChangeListener(this);
-          view.getViewTreeObserver().addOnPreDrawListener(creator);
+	Object getTag() {
+		return creator.getTag();
+	}
 
-          creator.attachListener = null;
-        }
+	static class HoneycombMr1ViewUtil {
+		static Object defer(View view, final DeferredRequestCreator creator) {
+			OnAttachStateChangeListener listener = new OnAttachStateChangeListener() {
+				@Override
+				public void onViewAttachedToWindow(View view) {
+					view.removeOnAttachStateChangeListener(this);
+					view.getViewTreeObserver().addOnPreDrawListener(creator);
 
-        @Override public void onViewDetachedFromWindow(View view) {
-        }
-      };
-      view.addOnAttachStateChangeListener(listener);
-      return listener;
-    }
+					creator.attachListener = null;
+				}
 
-    static void cancel(View view, Object attachListener) {
-      view.removeOnAttachStateChangeListener((OnAttachStateChangeListener) attachListener);
-    }
-  }
+				@Override
+				public void onViewDetachedFromWindow(View view) {
+				}
+			};
+			view.addOnAttachStateChangeListener(listener);
+			return listener;
+		}
+
+		static void cancel(View view, Object attachListener) {
+			view.removeOnAttachStateChangeListener((OnAttachStateChangeListener) attachListener);
+		}
+	}
 }

@@ -17,6 +17,7 @@ package com.squareup.picasso;
 
 import android.content.ContentResolver;
 import android.content.Context;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,22 +26,24 @@ import static android.content.ContentResolver.SCHEME_CONTENT;
 import static com.squareup.picasso.Picasso.LoadedFrom.DISK;
 
 class ContentStreamRequestHandler extends RequestHandler {
-  final Context context;
+	final Context context;
 
-  ContentStreamRequestHandler(Context context) {
-    this.context = context;
-  }
+	ContentStreamRequestHandler(Context context) {
+		this.context = context;
+	}
 
-  @Override public boolean canHandleRequest(Request data) {
-    return SCHEME_CONTENT.equals(data.uri.getScheme());
-  }
+	@Override
+	public boolean canHandleRequest(Request data) {
+		return SCHEME_CONTENT.equals(data.uri.getScheme());
+	}
 
-  @Override public Result load(Request request, int networkPolicy) throws IOException {
-    return new Result(getInputStream(request), DISK);
-  }
+	@Override
+	public Result load(Request request, int networkPolicy) throws IOException {
+		return new Result(getInputStream(request), DISK);
+	}
 
-  InputStream getInputStream(Request request) throws FileNotFoundException {
-    ContentResolver contentResolver = context.getContentResolver();
-    return contentResolver.openInputStream(request.uri);
-  }
+	InputStream getInputStream(Request request) throws FileNotFoundException {
+		ContentResolver contentResolver = context.getContentResolver();
+		return contentResolver.openInputStream(request.uri);
+	}
 }

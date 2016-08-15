@@ -18,14 +18,16 @@ package com.squareup.picasso;
 import android.graphics.Bitmap;
 
 class GetAction extends Action<Void> {
-  GetAction(Picasso picasso, Request data, int memoryPolicy, int networkPolicy, Object tag,
-      String key) {
-    super(picasso, null, data, memoryPolicy, networkPolicy, 0, null, key, tag, false);
-  }
+	GetAction(Picasso picasso, Request data, int memoryPolicy, int networkPolicy, Object tag,
+	          String key) {
+		super(picasso, null, data, memoryPolicy, networkPolicy, 0, null, key, tag, false);
+	}
 
-  @Override void complete(Bitmap result, Picasso.LoadedFrom from) {
-  }
+	@Override
+	void complete(Bitmap result, Picasso.LoadedFrom from) {
+	}
 
-  @Override public void error() {
-  }
+	@Override
+	public void error() {
+	}
 }
