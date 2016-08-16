@@ -203,6 +203,8 @@ class Dispatcher {
 
 		// 提交后开始创建BitmapHunter 就是一个Runnable
 		BitmapHunter hunter = hunterMap.get(action.getKey());
+
+		// 当遇到相同的Action时，Picasso会通过BitmapHunter的Attach来合并相同的请求，避免同一个请求重复进行
 		if (hunter != null) {
 			hunter.attach(action);
 			return;
@@ -230,9 +232,7 @@ class Dispatcher {
 	}
 
 	/**
-	 * 取消动作
-	 *
-	 * @param action action
+	 * 取消行动
 	 */
 	void performCancel(Action action) {
 		String key = action.getKey();
@@ -480,6 +480,8 @@ class Dispatcher {
 			return;
 		}
 		batch.add(hunter);
+
+		// 用Handler发送一个消息后，等消息处理完再发送相同消息就需要用的hasMessages()的方法
 		if (!handler.hasMessages(HUNTER_DELAY_NEXT_BATCH)) {
 			handler.sendEmptyMessageDelayed(HUNTER_DELAY_NEXT_BATCH, BATCH_DELAY);
 		}

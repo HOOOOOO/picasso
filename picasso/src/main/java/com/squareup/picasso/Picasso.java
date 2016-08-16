@@ -97,6 +97,12 @@ public class Picasso {
 		 * A {@link RequestTransformer} which returns the original request.
 		 */
 		RequestTransformer IDENTITY = new RequestTransformer() {
+			/**
+			 * 默认情况下返回原来的Request
+			 *
+			 * @param request request
+			 * @return request
+			 */
 			@Override
 			public Request transformRequest(Request request) {
 				return request;
@@ -121,6 +127,7 @@ public class Picasso {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 				case HUNTER_BATCH_COMPLETE: {
+					// 批量处理完成
 					@SuppressWarnings("unchecked") List<BitmapHunter> batch = (List<BitmapHunter>) msg.obj;
 					//noinspection ForLoopReplaceableByForEach
 					for (int i = 0, n = batch.size(); i < n; i++) {
@@ -203,6 +210,10 @@ public class Picasso {
 		requestHandlers = Collections.unmodifiableList(allRequestHandlers);
 
 		this.stats = stats;
+
+		// 在WeakHashMap中，当某个键不再正常使用时，将自动移除其条目。更精确地说，对于一个给定的键，其
+		// 映射的存在并不阻止垃圾回收器对该键的丢弃，这就使该键成为可终止的，被终止，然后被回收。丢弃某个
+		// 键时，其条目从映射中有效地移除。
 		this.targetToAction = new WeakHashMap<Object, Action>();
 		this.targetToDeferredRequestCreator = new WeakHashMap<ImageView, DeferredRequestCreator>();
 		this.indicatorsEnabled = indicatorsEnabled;
@@ -532,6 +543,9 @@ public class Picasso {
 		targetToDeferredRequestCreator.put(view, request);
 	}
 
+	/**
+	 * 提交action 会检查target是否被复用
+	 */
 	void enqueueAndSubmit(Action action) {
 		Object target = action.getTarget();
 		if (target != null && targetToAction.get(target) != action) {
@@ -577,6 +591,7 @@ public class Picasso {
 			deliverAction(result, from, single);
 		}
 
+		// 一个hunter可能有好几个action
 		if (hasMultiple) {
 			//noinspection ForLoopReplaceableByForEach
 			for (int i = 0, n = joined.size(); i < n; i++) {
@@ -750,6 +765,7 @@ public class Picasso {
 	 * Set the global instance returned from {@link #with}.
 	 * <p/>
 	 * This method must be called before any calls to {@link #with} and may only be called once.
+	 * 这个方法必须在with之前调用 而且只能调用一次
 	 */
 	public static void setSingletonInstance(@NonNull Picasso picasso) {
 		if (picasso == null) {

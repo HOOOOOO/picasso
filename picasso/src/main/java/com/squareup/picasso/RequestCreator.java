@@ -57,6 +57,9 @@ import static com.squareup.picasso.Utils.log;
  */
 @SuppressWarnings("UnusedDeclaration") // Public API.
 public class RequestCreator {
+
+	// AtomicInteger，一个提供原子操作的Integer的类。在Java语言中，++i和i++操作并不是线程安全的，在使用
+	// 的时候，不可避免的会用到synchronized关键字。而AtomicInteger则通过一种线程安全的加减操作接口。
 	private static final AtomicInteger nextId = new AtomicInteger();
 
 	private final Picasso picasso;
@@ -469,10 +472,20 @@ public class RequestCreator {
 	 * Asynchronously fulfills the request without a {@link ImageView} or {@link Target},
 	 * and invokes the target {@link Callback} with the result. This is useful when you want to warm
 	 * up the cache with an image.
+	 * 无需ImageView或Target地异步执行request 可以用来为缓存预热
 	 * <p/>
 	 * <em>Note:</em> The {@link Callback} param is a strong reference and will prevent your
 	 * {@link android.app.Activity} or {@link android.app.Fragment} from being garbage collected
 	 * until the request is completed.
+	 * 这里的Callback是个强引用 可以防止Activity或Fragment被回收 知道Request执行完
+	 *
+	 * 强引用
+	 * Object obj = new Object();
+	 * Ref ref = new Ref(obj);
+	 * 在这种情况下，如果ref没有被GC，那么obj这个对象肯定不会GC的
+	 * 我们希望当一个对象被gc掉的时候通知用户线程，进行额外的处理时，就需要使用引用队列了。ReferenceQueue
+	 * 即这样的一个对象，当一个obj被gc掉之后，其相应的包装类，即ref对象会被放入queue中。我们可以从queue中
+	 * 获取到相应的对象信息，同时进行额外的处理。比如反向操作，数据清理等。
 	 */
 	public void fetch(@Nullable Callback callback) {
 		long started = System.nanoTime();
@@ -552,6 +565,7 @@ public class RequestCreator {
 	 * <em>Note:</em> This method keeps a weak reference to the {@link Target} instance and will be
 	 * garbage collected if you do not keep a strong reference to it. To receive callbacks when an
 	 * image is loaded use {@link #into(ImageView, Callback)}.
+	 * 这里的Target是弱引用
 	 */
 	public void into(@NonNull Target target) {
 		long started = System.nanoTime();
@@ -708,6 +722,7 @@ public class RequestCreator {
 		}
 
 		// 判断是否需要延期执行
+		// 如果设置了fit 则图片要根据ImageView的大小来变换 这时候要等ImageView布局完了之后才执行
 		if (deferred) {
 			if (data.hasSize()) {
 				throw new IllegalStateException("Fit cannot be used with resize.");
@@ -764,6 +779,7 @@ public class RequestCreator {
 
 	/**
 	 * Create the request optionally passing it through the request transformer.
+	 * 生成Request
 	 */
 	private Request createRequest(long started) {
 		int id = nextId.getAndIncrement();

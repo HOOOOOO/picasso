@@ -23,6 +23,12 @@ import java.lang.ref.WeakReference;
 
 import static com.squareup.picasso.Picasso.Priority;
 
+/**
+ * Action包含了Request 不同(target等不同)的Action的Request的基本参数可能是相同的 这样它们的key也相同
+ * Action还包含了网络请求协议等等
+ *
+ * @param <T>
+ */
 abstract class Action<T> {
 	final Picasso picasso;
 	final Request request;
@@ -41,6 +47,17 @@ abstract class Action<T> {
 	       int errorResId, Drawable errorDrawable, String key, Object tag, boolean noFade) {
 		this.picasso = picasso;
 		this.request = request;
+
+		// 在weak reference指向的对象被回收后, weak reference本身其实也就没有用了. java提供了一个
+		// ReferenceQueue来保存这些所指向的对象已经被回收的reference. 用法是在定义WeakReference的时候将
+		// 一个ReferenceQueue的对象作为参数传入构造函数.
+		//
+		// 如果target不为空，则对target进行弱引用，意思是就算是target被引用了，也还是可以被回收。
+		// 可以使用**.get()方法老获取实际的强引用对象
+		// 并且在构造时传入了referenceQueue，当target被回收后 这个RequestWeakReference就没用了，被保存在
+		// referenceQueue中
+		//
+		// 同时 Picasso在后台启动了一个线程 不断的从referenceQueue中获取引用 并把action取消掉
 		this.target =
 				target == null ? null : new RequestWeakReference<T>(this, target, picasso.referenceQueue);
 		this.memoryPolicy = memoryPolicy;

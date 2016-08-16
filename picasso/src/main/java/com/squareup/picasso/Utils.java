@@ -185,6 +185,13 @@ final class Utils {
 		return result;
 	}
 
+	/**
+	 * key是根据Request来生成的 Request包含了请求的基本信息 包括地址 图片的变换等等
+	 *
+	 * @param data data
+	 * @param builder builder
+	 * @return key
+	 */
 	static String createKey(Request data, StringBuilder builder) {
 		if (data.stableKey != null) {
 			builder.ensureCapacity(data.stableKey.length() + KEY_PADDING);
@@ -223,7 +230,6 @@ final class Utils {
 				builder.append(KEY_SEPARATOR);
 			}
 		}
-
 		return builder.toString();
 	}
 

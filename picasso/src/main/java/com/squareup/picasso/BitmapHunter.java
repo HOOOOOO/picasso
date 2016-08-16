@@ -285,6 +285,9 @@ class BitmapHunter implements Runnable {
 		return bitmap;
 	}
 
+	/**
+	 * 将action和hunter绑定 一个hunter可维护多个action
+	 */
 	void attach(Action action) {
 		boolean loggingEnabled = picasso.loggingEnabled;
 		Request request = action.request;
@@ -305,6 +308,7 @@ class BitmapHunter implements Runnable {
 			actions = new ArrayList<Action>(3);
 		}
 
+		// 把相同的action整合起来
 		actions.add(action);
 
 		if (loggingEnabled) {
@@ -312,11 +316,16 @@ class BitmapHunter implements Runnable {
 		}
 
 		Priority actionPriority = action.getPriority();
+
+		// ordinal() 这个方法返回枚举值在枚举类种的顺序，这个顺序根据枚举值声明的顺序而定
 		if (actionPriority.ordinal() > priority.ordinal()) {
 			priority = actionPriority;
 		}
 	}
 
+	/**
+	 * hunter和action解绑
+	 */
 	void detach(Action action) {
 		boolean detached = false;
 		if (this.action == action) {
@@ -337,6 +346,9 @@ class BitmapHunter implements Runnable {
 		}
 	}
 
+	/**
+	 * 计算hunter的优先值
+	 */
 	private Priority computeNewPriority() {
 		Priority newPriority = LOW;
 
@@ -441,13 +453,6 @@ class BitmapHunter implements Runnable {
 
 	/**
 	 * 获取BitmapHunter
-	 *
-	 * @param picasso picasso
-	 * @param dispatcher dispatcher
-	 * @param cache cache
-	 * @param stats stats
-	 * @param action action
-	 * @return BitmapHunter
 	 */
 	static BitmapHunter forRequest(Picasso picasso, Dispatcher dispatcher, Cache cache, Stats stats,
 	                               Action action) {
