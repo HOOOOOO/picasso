@@ -197,6 +197,7 @@ public class Picasso {
 		// ResourceRequestHandler needs to be the first in the list to avoid
 		// forcing other RequestHandlers to perform null checks on request.uri
 		// to cover the (request.resourceId != 0) case.
+		// ResourceRequestHandler要放在第一个 避免其他RequestHandler检查uri是否为空
 		allRequestHandlers.add(new ResourceRequestHandler(context));
 		if (extraRequestHandlers != null) {
 			allRequestHandlers.addAll(extraRequestHandlers);

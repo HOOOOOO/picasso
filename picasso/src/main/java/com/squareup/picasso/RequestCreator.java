@@ -188,6 +188,7 @@ public class RequestCreator {
 	 * <strong>WARNING:</strong>: Picasso will keep a reference to the tag for
 	 * as long as this tag is paused and/or has active requests. Look out for
 	 * potential leaks.
+	 * 可以把tag设置成activity等
 	 *
 	 * @see Picasso#cancelTag(Object)
 	 * @see Picasso#pauseTag(Object)

@@ -101,6 +101,8 @@ class Dispatcher {
 	           Downloader downloader, Cache cache, Stats stats) {
 		this.dispatcherThread = new DispatcherThread();
 		this.dispatcherThread.start();
+
+		// 这里是为了不使消息停留太长时间
 		Utils.flushStackLocalLeaks(dispatcherThread.getLooper());
 		this.context = context;
 		this.service = service;
@@ -261,8 +263,12 @@ class Dispatcher {
 		}
 	}
 
+	/**
+	 * 暂停tag
+	 */
 	void performPauseTag(Object tag) {
 		// Trying to pause a tag that is already paused.
+		// set不能有重复的对象
 		if (!pausedTags.add(tag)) {
 			return;
 		}
@@ -309,6 +315,7 @@ class Dispatcher {
 
 			// Check if the hunter can be cancelled in case all its requests
 			// had the tag being paused here.
+			// 判断这个hunter是否可以取消
 			if (hunter.cancel()) {
 				it.remove();
 				if (loggingEnabled) {
